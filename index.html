@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DES Cipher</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #0a0c0f;
+    --surface: #111418;
+    --border:  #1e2530;
+    --accent:  #00d4aa;
+    --accent2: #0090ff;
+    --danger:  #ff4560;
+    --success: #00d4aa;
+    --text:    #cdd6e0;
+    --muted:   #4a5568;
+    --mono:    'Share Tech Mono', monospace;
+    --sans:    'Rajdhani', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse 80% 40% at 50% -10%, rgba(0,212,170,.08) 0%, transparent 60%),
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(30,37,48,.4) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(30,37,48,.4) 40px);
+  }
+  header {
+    padding: 1.8rem 3rem 1.2rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .header-left { display: flex; align-items: baseline; gap: 1rem; }
+  header h1 { font-family: var(--mono); font-size: 1.6rem; color: var(--accent); letter-spacing: .12em; }
+  header span { font-size: .85rem; color: var(--muted); letter-spacing: .08em; }
+  .btn-example {
+    background: rgba(0,212,170,.1);
+    border: 1px solid rgba(0,212,170,.35);
+    border-radius: 4px;
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: .82rem;
+    font-weight: 600;
+    letter-spacing: .08em;
+    padding: .45rem 1rem;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .btn-example:hover { background: rgba(0,212,170,.2); }
+  main {
+    max-width: 980px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.4rem 1.6rem;
+  }
+  .card-full { grid-column: 1 / -1; }
+  .info-bar {
+    grid-column: 1 / -1;
+    background: rgba(0,212,170,.06);
+    border: 1px solid rgba(0,212,170,.2);
+    border-radius: 6px;
+    padding: 1rem 1.4rem;
+    font-size: .85rem;
+    color: #7ae8d0;
+    line-height: 1.7;
+    font-family: var(--sans);
+  }
+  .info-bar strong { color: var(--accent); }
+  .label {
+    font-size: .72rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: .45rem;
+  }
+  .seg {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .seg button {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: .9rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    padding: .55rem .5rem;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .seg button.active { background: rgba(0,212,170,.12); color: var(--accent); }
+  .seg button:not(:last-child) { border-right: 1px solid var(--border); }
+  input, textarea {
+    width: 100%;
+    background: #0d1015;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: .88rem;
+    padding: .65rem .85rem;
+    outline: none;
+    resize: vertical;
+    transition: border-color .2s;
+  }
+  input:focus, textarea:focus { border-color: var(--accent); }
+  input.error, textarea.error { border-color: var(--danger); }
+  input.ok { border-color: var(--success); }
+  textarea { min-height: 90px; }
+  .row { display: flex; gap: 1rem; margin-bottom: 1rem; }
+  .field { display: flex; flex-direction: column; gap: .4rem; flex: 1; }
+  .hint { font-size: .75rem; color: var(--muted); margin-top: .25rem; }
+  .hint.good { color: var(--accent); }
+  .hint.bad  { color: var(--danger); }
+  .key-wrap { position: relative; }
+  .key-counter {
+    position: absolute;
+    right: .7rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: var(--mono);
+    font-size: .75rem;
+    color: var(--muted);
+    pointer-events: none;
+  }
+  .key-counter.ok  { color: var(--accent); }
+  .key-counter.bad { color: var(--danger); }
+  .btn-run {
+    width: 100%;
+    padding: .85rem;
+    background: linear-gradient(135deg, var(--accent) 0%, #00a888 100%);
+    color: #0a0c0f;
+    border: none;
+    border-radius: 4px;
+    font-family: var(--sans);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity .2s, transform .1s;
+    margin-top: .5rem;
+  }
+  .btn-run:hover { opacity: .9; }
+  .btn-run:active { transform: scale(.99); }
+  .btn-run:disabled { opacity: .4; cursor: not-allowed; }
+  .output-area textarea {
+    background: #080b0e;
+    color: var(--accent);
+    min-height: 100px;
+  }
+  .out-wrap { position: relative; }
+  .copy-btn {
+    position: absolute;
+    top: .5rem;
+    right: .5rem;
+    background: rgba(0,212,170,.1);
+    border: 1px solid rgba(0,212,170,.25);
+    border-radius: 3px;
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: .72rem;
+    padding: .25rem .55rem;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .copy-btn:hover { background: rgba(0,212,170,.2); }
+  .error-box {
+    background: rgba(255,69,96,.1);
+    border: 1px solid rgba(255,69,96,.4);
+    border-radius: 4px;
+    color: var(--danger);
+    font-family: var(--mono);
+    font-size: .82rem;
+    padding: .7rem 1rem;
+    display: none;
+    margin-bottom: .5rem;
+  }
+  .error-box.visible { display: block; }
+  .iv-row { display: none; }
+  .iv-row.visible { display: flex; }
+  .rounds-section { display: none; }
+  .rounds-section.visible { display: block; }
+  .rounds-title { font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin-bottom: .8rem; }
+  .rounds-table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: .78rem; }
+  .rounds-table th { color: var(--muted); text-align: left; padding: .35rem .6rem; border-bottom: 1px solid var(--border); letter-spacing: .08em; }
+  .rounds-table td { padding: .3rem .6rem; border-bottom: 1px solid rgba(30,37,48,.6); color: #8899aa; }
+  .rounds-table tr:hover td { background: rgba(255,255,255,.02); color: var(--text); }
+  .rounds-table td:first-child { color: var(--accent); font-weight: bold; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .loading { animation: pulse .8s infinite; }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-left">
+    <h1>&#x25A0; DES CIPHER</h1>
+    <span>Data Encryption Standard — ECB / CBC</span>
+  </div>
+  <button class="btn-example" onclick="fillExample()">Заполнить пример</button>
+</header>
+
+<main>
+
+  <div class="info-bar card-full">
+    <strong>Как пользоваться:</strong>
+    выберите операцию (Encrypt / Decrypt), режим (ECB или CBC), введите текст и ключ ровно <strong>8 символов</strong> → нажмите Run.<br>
+    Для дешифрования вставьте hex-результат в поле Input и переключите операцию на <strong>Decrypt</strong>.
+    В режиме CBC скопируйте <strong>Used IV</strong> из вывода и вставьте его при дешифровании.
+  </div>
+
+  <div class="card">
+    <div class="label">Операция</div>
+    <div class="seg" id="op-seg">
+      <button class="active" data-val="encrypt">Encrypt</button>
+      <button data-val="decrypt">Decrypt</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">Режим</div>
+    <div class="seg" id="mode-seg">
+      <button class="active" data-val="ecb">ECB</button>
+      <button data-val="cbc">CBC</button>
+    </div>
+    <div class="hint" id="mode-hint" style="margin-top:.5rem">ECB — простой режим, каждый блок шифруется независимо</div>
+  </div>
+
+  <div class="card card-full">
+    <div class="row">
+      <div class="field">
+        <div class="label">Формат ввода</div>
+        <div class="seg" id="in-fmt-seg">
+          <button class="active" data-val="text">Text</button>
+          <button data-val="hex">Hex</button>
+        </div>
+        <div class="hint">Text — обычный текст &nbsp;|&nbsp; Hex — шестнадцатеричный</div>
+      </div>
+      <div class="field">
+        <div class="label">Формат вывода</div>
+        <div class="seg" id="out-fmt-seg">
+          <button class="active" data-val="hex">Hex</button>
+          <button data-val="text">Text</button>
+        </div>
+        <div class="hint">Для шифрования рекомендуется Hex</div>
+      </div>
+    </div>
+
+    <div class="field" style="margin-bottom:1rem">
+      <div class="label">Входные данные</div>
+      <textarea id="input-text" placeholder="Введите текст для шифрования…"></textarea>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <div class="label">Ключ — ровно 8 символов</div>
+        <div class="key-wrap">
+          <input id="key-input" type="text" placeholder="например: mysecret" oninput="updateKeyCounter()">
+          <span class="key-counter" id="key-counter">0/8</span>
+        </div>
+        <div class="hint" id="key-hint">Введите ровно 8 символов — не больше, не меньше</div>
+      </div>
+    </div>
+
+    <div class="row iv-row" id="iv-row">
+      <div class="field">
+        <div class="label">IV — вектор инициализации (16 hex-символов)</div>
+        <input id="iv-input" type="text" placeholder="Оставьте пустым → будет использован 0000000000000000">
+        <div class="hint">При дешифровании вставьте сюда значение «Used IV» из результата шифрования</div>
+      </div>
+    </div>
+
+    <div class="error-box" id="error-box"></div>
+    <button class="btn-run" id="run-btn" onclick="runProcess()">&#x25B6;&nbsp; Run &nbsp;<small style="font-weight:400;font-size:.75rem">(Ctrl+Enter)</small></button>
+  </div>
+
+  <div class="card card-full">
+    <div class="label">Результат</div>
+    <div class="out-wrap">
+      <textarea id="output-text" readonly placeholder="Результат появится здесь…"></textarea>
+      <button class="copy-btn" onclick="copyOutput()">COPY</button>
+    </div>
+    <div id="iv-out" style="margin-top:.6rem;font-family:var(--mono);font-size:.82rem;color:var(--muted);display:none">
+      Used IV: <span id="iv-out-val" style="color:var(--accent)"></span>
+      <span style="color:var(--muted);font-size:.75rem"> ← скопируйте для дешифрования</span>
+    </div>
+  </div>
+
+  <div class="card card-full rounds-section" id="rounds-section">
+    <div class="rounds-title">Состояние по раундам — первый блок (сеть Фейстеля, 16 раундов)</div>
+    <table class="rounds-table">
+      <thead><tr><th>#</th><th>L (32 бит)</th><th>R (32 бит)</th><th>Подключ (48 бит)</th></tr></thead>
+      <tbody id="rounds-body"></tbody>
+    </table>
+  </div>
+
+</main>
+
+<script>
+  const state = { operation: "encrypt", mode: "ecb", inFmt: "text", outFmt: "hex" };
+
+  function bindSeg(id, key, cb) {
+    document.getElementById(id).querySelectorAll("button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.getElementById(id).querySelectorAll("button").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        state[key] = btn.dataset.val;
+        if (cb) cb(btn.dataset.val);
+      });
+    });
+  }
+
+  bindSeg("op-seg", "operation", v => {
+    document.getElementById("input-text").placeholder =
+      v === "encrypt" ? "Введите текст для шифрования…" : "Вставьте hex-результат шифрования…";
+  });
+
+  bindSeg("mode-seg", "mode", v => {
+    document.getElementById("iv-row").classList.toggle("visible", v === "cbc");
+    document.getElementById("mode-hint").textContent = v === "ecb"
+      ? "ECB — простой режим, каждый блок шифруется независимо"
+      : "CBC — каждый блок зависит от предыдущего, используется IV";
+  });
+
+  bindSeg("in-fmt-seg", "inFmt", () => updateKeyCounter());
+  bindSeg("out-fmt-seg", "outFmt");
+
+  function updateKeyCounter() {
+    const val     = document.getElementById("key-input").value;
+    const counter = document.getElementById("key-counter");
+    const hint    = document.getElementById("key-hint");
+    const inp     = document.getElementById("key-input");
+
+    const len = new TextEncoder().encode(val).length;
+    counter.textContent = len + "/8";
+    if (len === 8) {
+      counter.className = "key-counter ok";
+      inp.className = "ok";
+      hint.textContent = "✓ Длина ключа правильная";
+      hint.className = "hint good";
+    } else if (len > 8) {
+      counter.className = "key-counter bad";
+      inp.className = "error";
+      hint.textContent = "✗ Слишком длинный — нужно ровно 8 символов";
+      hint.className = "hint bad";
+    } else {
+      counter.className = "key-counter";
+      inp.className = "";
+      hint.textContent = "Введите ровно 8 символов — не больше, не меньше";
+      hint.className = "hint";
+    }
+  }
+
+  function fillExample() {
+    document.getElementById("op-seg").querySelectorAll("button").forEach(b => b.classList.remove("active"));
+    document.getElementById("op-seg").querySelector("[data-val='encrypt']").classList.add("active");
+    state.operation = "encrypt";
+
+    document.getElementById("in-fmt-seg").querySelectorAll("button").forEach(b => b.classList.remove("active"));
+    document.getElementById("in-fmt-seg").querySelector("[data-val='text']").classList.add("active");
+    state.inFmt = "text";
+
+    document.getElementById("out-fmt-seg").querySelectorAll("button").forEach(b => b.classList.remove("active"));
+    document.getElementById("out-fmt-seg").querySelector("[data-val='hex']").classList.add("active");
+    state.outFmt = "hex";
+
+    document.getElementById("mode-seg").querySelectorAll("button").forEach(b => b.classList.remove("active"));
+    document.getElementById("mode-seg").querySelector("[data-val='ecb']").classList.add("active");
+    state.mode = "ecb";
+    document.getElementById("iv-row").classList.remove("visible");
+
+    document.getElementById("input-text").value = "Hello DES";
+    document.getElementById("key-input").value  = "mysecret";
+    document.getElementById("iv-input").value   = "";
+    document.getElementById("output-text").value = "";
+    document.getElementById("iv-out").style.display = "none";
+    clearError();
+    updateKeyCounter();
+  }
+
+  function showError(msg) {
+    const box = document.getElementById("error-box");
+    box.textContent = "⚠ " + msg;
+    box.classList.add("visible");
+  }
+
+  function clearError() {
+    document.getElementById("error-box").classList.remove("visible");
+  }
+
+  function setRounds(rounds) {
+    const sec  = document.getElementById("rounds-section");
+    const body = document.getElementById("rounds-body");
+    if (!rounds || rounds.length === 0) { sec.classList.remove("visible"); return; }
+    body.innerHTML = rounds.map(r =>
+      `<tr><td>${r.round}</td><td>${r.L}</td><td>${r.R}</td><td>${r.subkey}</td></tr>`
+    ).join("");
+    sec.classList.add("visible");
+  }
+
+  async function runProcess() {
+    clearError();
+    const text   = document.getElementById("input-text").value.trim();
+    const keyRaw = document.getElementById("key-input").value.trim();
+    const ivRaw  = document.getElementById("iv-input").value.trim();
+    const btn    = document.getElementById("run-btn");
+
+    if (!text)   { showError("Поле ввода пустое — введите текст или hex"); return; }
+    if (!keyRaw) { showError("Введите ключ"); return; }
+
+    let key;
+    const enc = new TextEncoder().encode(keyRaw);
+    if (enc.length !== 8) { showError(`Ключ должен быть ровно 8 символов. Сейчас: ${enc.length}`); return; }
+    key = Array.from(enc).map(b => b.toString(16).padStart(2, "0")).join("");
+
+    btn.disabled = true;
+    btn.textContent = "Обработка…";
+    btn.classList.add("loading");
+
+    try {
+      const res  = await fetch("/api/process", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          operation: state.operation, mode: state.mode,
+          input_format: state.inFmt, output_format: state.outFmt,
+          text, key, iv: ivRaw,
+        }),
+      });
+      const data = await res.json();
+
+      if (data.error) {
+        showError(data.error);
+        document.getElementById("output-text").value = "";
+        setRounds([]);
+      } else {
+        document.getElementById("output-text").value = data.result;
+        setRounds(data.rounds);
+        const ivOut = document.getElementById("iv-out");
+        if (data.iv) {
+          document.getElementById("iv-out-val").textContent = data.iv;
+          ivOut.style.display = "block";
+        } else {
+          ivOut.style.display = "none";
+        }
+      }
+    } catch {
+      showError("Ошибка сети — проверьте что сервер запущен");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "▶ Run   (Ctrl+Enter)";
+      btn.classList.remove("loading");
+    }
+  }
+
+  function copyOutput() {
+    const val = document.getElementById("output-text").value;
+    if (!val) return;
+    navigator.clipboard.writeText(val);
+    const btn = document.querySelector(".copy-btn");
+    btn.textContent = "COPIED";
+    setTimeout(() => btn.textContent = "COPY", 1500);
+  }
+
+  document.addEventListener("keydown", e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") runProcess();
+  });
+
+  updateKeyCounter();
+</script>
+</body>
+</html>
