@@ -53,7 +53,7 @@ mv test_des.py tests/ 2>/dev/null || true
 mv app.py web/ 2>/dev/null || true
 mv index.html web/templates/ 2>/dev/null || true
 
-echo "✅ Структура проекта настроена"
+echo " Структура проекта настроена"
 ls -la
 
 2. Запуск приложения
@@ -74,10 +74,10 @@ http://127.0.0.1:5000
 Альтернативный быстрый запуск (если структура уже правильная)
 Bashcd web && python app.py
 
-🧪 Запуск тестов
+Запуск тестов
 Bashpython -m pytest tests/test_des.py -v
 
-📁 Структура проекта после настройки
+Структура проекта после настройки
 textdes_project/
 ├── des_impl/              # Ядро алгоритма DES
 │   ├── __init__.py
