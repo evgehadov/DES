@@ -36,3 +36,51 @@ mv index.html web/templates/ 2>/dev/null || true
 
 echo "✅ Структура проекта настроена"
 ls -la
+
+2. Запуск приложения
+Bash# Создаём виртуальное окружение
+python -m venv venv
+source venv/bin/activate          # Mac / Linux
+# venv\Scripts\activate           # Windows
+
+# Устанавливаем Flask
+pip install flask
+
+# Запускаем сервер
+cd web
+python app.py
+После запуска откройте в браузере:
+http://127.0.0.1:5000
+
+Альтернативный быстрый запуск (если структура уже правильная)
+Bashcd web && python app.py
+
+🧪 Запуск тестов
+Bashpython -m pytest tests/test_des.py -v
+
+📁 Структура проекта после настройки
+textdes_project/
+├── des_impl/              # Ядро алгоритма DES
+│   ├── __init__.py
+│   ├── des_core.py
+│   ├── feistel.py
+│   ├── keyschedule.py
+│   ├── modes.py
+│   └── tables.py
+├── tests/
+│   └── test_des.py
+├── web/
+│   ├── app.py
+│   └── templates/
+│       └── index.html
+├── README.md
+├── requirements.txt
+└── .gitignore
+
+
+
+
+
+
+
+
